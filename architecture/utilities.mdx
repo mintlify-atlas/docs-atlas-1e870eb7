@@ -1,0 +1,302 @@
+---
+title: Utilities
+description: Utility functions, colors, fonts, and styles used throughout the app
+---
+
+## Overview
+
+The `src/utils/` directory contains reusable utility functions, design tokens, and helper modules used throughout The Go Game Todo App.
+
+## Colors
+
+**Location**: `src/utils/colors.ts`
+
+Global color palette used for consistent theming across the application.
+
+```ts src/utils/colors.ts
+export const GlobalColors = {
+    darkBackground: '#4581E0',
+    lightBackground: '#D6DBE2',
+    lightText: '#fff',
+    darkText: '#2C2D30',
+    error: '#e74c3c',
+    success: '#2ecc71',
+    warning: '#f7dc6f',
+}
+```
+
+### Color Tokens
+
+<ParamField path="darkBackground" type="string" default="#4581E0">
+  Primary dark blue background color
+</ParamField>
+
+<ParamField path="lightBackground" type="string" default="#D6DBE2">
+  Light gray background color
+</ParamField>
+
+<ParamField path="lightText" type="string" default="#fff">
+  White text color for dark backgrounds
+</ParamField>
+
+<ParamField path="darkText" type="string" default="#2C2D30">
+  Dark text color for light backgrounds
+</ParamField>
+
+<ParamField path="error" type="string" default="#e74c3c">
+  Red color for error states
+</ParamField>
+
+<ParamField path="success" type="string" default="#2ecc71">
+  Green color for success states
+</ParamField>
+
+<ParamField path="warning" type="string" default="#f7dc6f">
+  Yellow color for warning states
+</ParamField>
+
+**Usage**:
+
+```tsx
+import { GlobalColors } from '@/utils/colors';
+
+<View style={{ backgroundColor: GlobalColors.darkBackground }}>
+  <Text style={{ color: GlobalColors.lightText }}>Hello</Text>
+</View>
+```
+
+---
+
+## Fonts
+
+**Location**: `src/utils/fonts.ts`
+
+Font configuration for custom typography throughout the app.
+
+```ts src/utils/fonts.ts
+export const fontsList = {
+    'lilita-one': require('@fonts/LilitaOne-Regular.ttf'),
+    'parkinsans-bold': require('@fonts/Parkinsans-Bold.ttf'),
+    'parkinsans-regular': require('@fonts/Parkinsans-Regular.ttf'),
+}
+
+export const appFonts = {
+    title: 'lilita-one',
+    subtitle: 'parkinsans-bold',
+    text: 'parkinsans-regular',
+}
+```
+
+### Font Tokens
+
+<ParamField path="fontsList" type="object">
+  Map of font names to font file paths for loading with `expo-font`
+</ParamField>
+
+<ParamField path="appFonts.title" type="string" default="lilita-one">
+  Font family for title components (24px)
+</ParamField>
+
+<ParamField path="appFonts.subtitle" type="string" default="parkinsans-bold">
+  Font family for subtitle components (18px)
+</ParamField>
+
+<ParamField path="appFonts.text" type="string" default="parkinsans-regular">
+  Font family for body text components (14px)
+</ParamField>
+
+**Usage**:
+
+```tsx App.tsx
+import { fontsList } from '@/utils/fonts';
+import { useFonts } from 'expo-font';
+
+export default function App() {
+  const [fontsLoaded] = useFonts(fontsList);
+  // ...
+}
+```
+
+```tsx Component.tsx
+import { appFonts } from '@/utils/fonts';
+
+const styles = StyleSheet.create({
+  title: {
+    fontFamily: appFonts.title,
+    fontSize: 24,
+  }
+});
+```
+
+---
+
+## Styles
+
+**Location**: `src/utils/styles.ts`
+
+Reusable global StyleSheet definitions.
+
+```ts src/utils/styles.ts
+import { Platform, StyleSheet } from "react-native";
+
+export const GlobalStyles = StyleSheet.create({
+    card: {
+        marginHorizontal: 20,
+        paddingHorizontal: 50,
+        paddingVertical: 20,
+        backgroundColor: 'white',
+        borderRadius: 8,
+        elevation: 4,
+        maxWidth: 480,
+        minWidth: Platform?.OS === 'web' ? 400 : 'auto',
+    }
+});
+```
+
+### Style Definitions
+
+<ParamField path="GlobalStyles.card" type="ViewStyle">
+  Card container style with:
+  - White background with border radius
+  - Horizontal/vertical padding
+  - Shadow elevation (Android) and max/min width constraints
+  - Platform-specific minimum width (400px on web)
+</ParamField>
+
+**Usage**:
+
+```tsx
+import { GlobalStyles } from '@/utils/styles';
+
+<View style={GlobalStyles.card}>
+  <Text>Card content</Text>
+</View>
+```
+
+---
+
+## Alert Utility
+
+**Location**: `src/utils/alert.ts`
+
+Cross-platform alert function with web polyfill.
+
+```ts src/utils/alert.ts
+import { Alert, Platform } from 'react-native'
+
+const alertPolyfill = (
+    title: string,
+    description: string,
+    options?: Array<{
+        text: string,
+        onPress: () => void,
+        style?: string
+    }>
+) => {
+    if (!options) {
+        window.alert([title, description].filter(Boolean).join('\n'));
+        return;
+    }
+    
+    const result = window.confirm([title, description].filter(Boolean).join('\n'))
+
+    if (result) {
+        const confirmOption = options.find(({ style }) => style !== 'cancel')
+        confirmOption && confirmOption.onPress()
+    } else {
+        const cancelOption = options.find(({ style }) => style === 'cancel')
+        cancelOption && cancelOption.onPress()
+    }
+}
+
+const alert = Platform.OS === 'web' ? alertPolyfill : Alert.alert
+
+export default alert;
+```
+
+### Parameters
+
+<ParamField path="title" type="string" required>
+  Alert dialog title
+</ParamField>
+
+<ParamField path="description" type="string" required>
+  Alert message body
+</ParamField>
+
+<ParamField path="options" type="array">
+  Array of button configurations with `text`, `onPress`, and optional `style` ('cancel')
+</ParamField>
+
+**Usage**:
+
+```tsx
+import alert from '@/utils/alert';
+
+// Simple alert
+alert("Success", "Task created successfully!");
+
+// Alert with actions
+alert(
+  "Delete Task",
+  "Are you sure you want to delete this task?",
+  [
+    { text: "Cancel", onPress: () => {}, style: "cancel" },
+    { text: "Delete", onPress: () => deleteTask(id) }
+  ]
+);
+```
+
+<Note>
+  The alert utility automatically uses native `Alert.alert` on iOS/Android and falls back to browser `alert()`/`confirm()` on web platforms.
+</Note>
+
+---
+
+## Date Utility
+
+**Location**: `src/utils/date.ts`
+
+Date formatting helper function.
+
+```ts src/utils/date.ts
+export function getFormattedDate(date: Date) {
+    return date?.toString()?.slice(0, 10);
+}
+```
+
+### Function
+
+<ParamField path="getFormattedDate" type="(date: Date) => string">
+  Formats a Date object to a string in ISO format (YYYY-MM-DD)
+</ParamField>
+
+**Parameters**:
+- `date` (Date): JavaScript Date object to format
+
+**Returns**: String representation of the date (first 10 characters of `toString()`)
+
+**Usage**:
+
+```tsx
+import { getFormattedDate } from '@/utils/date';
+
+const formattedDate = getFormattedDate(new Date());
+// Example output: "Wed Mar 03"
+```
+
+<Warning>
+  This function uses `Date.toString().slice(0, 10)` which returns the day and date portion (e.g., "Wed Mar 03"), not a full ISO date string. For ISO format dates, use `date.toISOString().slice(0, 10)` instead.
+</Warning>
+
+## Summary
+
+The utilities module provides:
+
+- **GlobalColors** - Consistent color palette across the app
+- **fontsList** & **appFonts** - Custom font loading and typography tokens
+- **GlobalStyles** - Reusable component styles (card layout)
+- **alert** - Cross-platform alert dialogs with web support
+- **getFormattedDate** - Date formatting helper
+
+These utilities ensure consistency, reduce code duplication, and provide platform-specific adaptations where needed.

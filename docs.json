@@ -34,7 +34,8 @@
           "architecture/overview",
           "architecture/state-management",
           "architecture/navigation",
-          "architecture/api-client"
+          "architecture/api-client",
+          "architecture/utilities"
         ]
       },
       {
