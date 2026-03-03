@@ -1,0 +1,93 @@
+---
+title: 'LoginScreen'
+description: 'Authentication screen for user login with form validation'
+---
+
+## Overview
+
+The `LoginScreen` is the entry point for user authentication in The Go Game Todo App. It provides a clean, centered interface for users to sign in to their account.
+
+## Screen Implementation
+
+The LoginScreen is a simple presentational component that composes the `LoginForm` and `TaskImage` components:
+
+```tsx LoginScreen.tsx
+import LoginForm from '@/components/auth/LoginForm';
+import TaskImage from '@/components/ui/TaskImage';
+import { GlobalColors } from '@/utils/colors';
+import React from 'react'
+import { Platform, StyleSheet, View } from 'react-native';
+
+function LoginScreen() {
+    return (
+        <View style={styles.rootContainer}>
+            <TaskImage />
+            <LoginForm />
+        </View>
+    )
+}
+
+export default LoginScreen;
+
+const styles = StyleSheet.create({
+    rootContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: Platform?.OS === 'web' ? 'center' : 'stretch',
+        backgroundColor: GlobalColors?.darkBackground,
+    }
+});
+```
+
+## Key Features
+
+<Steps>
+  <Step title="Display Task Branding">
+    Shows the `TaskImage` component at the top for visual branding
+  </Step>
+  
+  <Step title="Render Login Form">
+    Displays the `LoginForm` component with input fields and validation
+  </Step>
+  
+  <Step title="Handle Authentication">
+    Form submission is handled within the `LoginForm` component, which manages auth state
+  </Step>
+</Steps>
+
+## Layout Behavior
+
+<Info>
+  The screen uses platform-specific alignment:
+  - **Web**: Centers content horizontally (`alignItems: 'center'`)
+  - **Mobile**: Stretches content to full width (`alignItems: 'stretch'`)
+</Info>
+
+## Styling
+
+### Root Container
+
+- **flex: 1** - Takes up full screen height
+- **justifyContent: 'center'** - Vertically centers content
+- **backgroundColor** - Uses `GlobalColors.darkBackground` for consistent theming
+- **Platform-specific alignment** - Adapts to web vs. mobile layouts
+
+## Navigation
+
+<Note>
+  This screen typically serves as the initial route when users are not authenticated. After successful login, navigation to the `HomeScreen` is handled by the authentication context/state management.
+</Note>
+
+## Dependencies
+
+| Component/Util | Purpose |
+|----------------|----------|
+| `LoginForm` | Handles user input, validation, and authentication logic |
+| `TaskImage` | Displays app branding/logo |
+| `GlobalColors` | Provides consistent color theming |
+| `Platform` | Enables platform-specific UI adjustments |
+
+## Related Components
+
+- [LoginForm](/components/auth-components) - Authentication form with validation
+- [TaskImage](/components/ui-components) - Branding component

@@ -1,0 +1,518 @@
+---
+title: 'Tasks API'
+description: 'CRUD operations for task management'
+---
+
+## Overview
+
+The Tasks API provides complete CRUD functionality for managing todo items. All functions are defined in `src/services/task.ts` and work with the `Task` interface.
+
+## Task Interface
+
+All task operations use the following TypeScript interface from `src/interfaces/task.ts`:
+
+```typescript
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: Date;
+  status: string;
+  userId: string;
+}
+```
+
+### Fields
+
+<ResponseField name="id" type="string">
+  Unique identifier for the task
+</ResponseField>
+
+<ResponseField name="title" type="string">
+  Task title or name
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Detailed description of the task
+</ResponseField>
+
+<ResponseField name="createdAt" type="Date">
+  Timestamp when the task was created
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status of the task (e.g., "pending", "completed")
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  ID of the user who owns the task
+</ResponseField>
+
+---
+
+## getTasks()
+
+Retrieves all tasks for the authenticated user.
+
+### Function Signature
+
+```typescript
+export async function getTasks()
+```
+
+### Parameters
+
+None. The user is identified by the authentication token in the request headers.
+
+### Returns
+
+<ResponseField name="data" type="Task[]">
+  Array of task objects belonging to the authenticated user
+</ResponseField>
+
+### Example Usage
+
+<CodeGroup>
+
+```typescript Fetch All Tasks
+import { getTasks } from '@/services/task';
+import { useTaskStore } from '@/store/TaskState';
+
+const { setTasks } = useTaskStore();
+
+try {
+  const data = await getTasks();
+  setTasks(data);
+  console.log(`Loaded ${data.length} tasks`);
+} catch (error) {
+  console.log("Error fetching tasks: ", error);
+}
+```
+
+```typescript From HomeScreen Component
+// src/screens/HomeScreen.tsx:17-28
+useEffect(() => {
+  async function fetchData() {
+    try {
+      const data = await getTasks();
+      setTasks(data);
+    } catch (error) {
+      alert("Attention please!", "The tasks could not be loaded");
+      console.log("Error fetching tasks: ", error);
+    }
+    setIsLoading(false);
+  }
+  fetchData();
+}, []);
+```
+
+</CodeGroup>
+
+### HTTP Request
+
+```http
+GET /tasks
+Authorization: Bearer {token}
+```
+
+<Info>
+  This endpoint returns only tasks belonging to the authenticated user. The user ID is extracted from the JWT token.
+</Info>
+
+---
+
+## addTask()
+
+Creates a new task.
+
+### Function Signature
+
+```typescript
+export async function addTask(body: Partial<Task>)
+```
+
+### Parameters
+
+<ParamField path="body" type="Partial<Task>" required>
+  Task data object. Typically includes `title` and `description`.
+</ParamField>
+
+<ParamField path="body.title" type="string" required>
+  The title of the new task
+</ParamField>
+
+<ParamField path="body.description" type="string" required>
+  Description or details of the task
+</ParamField>
+
+### Returns
+
+<ResponseField name="data" type="Task">
+  The newly created task object with all fields populated (including `id`, `createdAt`, `status`, and `userId`)
+</ResponseField>
+
+### Example Usage
+
+<CodeGroup>
+
+```typescript Create New Task
+import { addTask } from '@/services/task';
+import { useTaskStore } from '@/store/TaskState';
+
+const { addTask: addNewTask } = useTaskStore();
+
+const taskData = {
+  title: "Complete documentation",
+  description: "Write API documentation for all endpoints"
+};
+
+try {
+  const newTask = await addTask(taskData);
+  addNewTask(newTask);
+  console.log("Task created with ID:", newTask.id);
+} catch (error) {
+  console.log("Error adding task: ", error);
+}
+```
+
+```typescript From TaskScreen Component
+// src/screens/TaskScreen.tsx:42-51
+async function addTaskHandler(data: Partial<Task>) {
+  try {
+    const newTask = await addTask(data);
+    addNewTask(newTask);
+    navigation.goBack();   
+  } catch (error) {
+    alert("Ups!", "Error adding task, please check the data and try again.");
+    console.log("Error adding tasks: ", error);
+  }
+}
+```
+
+</CodeGroup>
+
+### HTTP Request
+
+```http
+POST /tasks
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "title": "Complete documentation",
+  "description": "Write API documentation for all endpoints"
+}
+```
+
+<Tip>
+  The server automatically sets `id`, `createdAt`, `status` (defaults to "pending"), and `userId` (from the authenticated user's token).
+</Tip>
+
+---
+
+## updateTask()
+
+Updates an existing task's title and/or description.
+
+### Function Signature
+
+```typescript
+export async function updateTask(id: string, body: Partial<Task>)
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The ID of the task to update
+</ParamField>
+
+<ParamField path="body" type="Partial<Task>" required>
+  Object containing the fields to update
+</ParamField>
+
+<ParamField path="body.title" type="string">
+  Updated task title
+</ParamField>
+
+<ParamField path="body.description" type="string">
+  Updated task description
+</ParamField>
+
+### Returns
+
+<ResponseField name="data" type="Partial<Task>">
+  The updated task data (may not include all fields)
+</ResponseField>
+
+### Example Usage
+
+<CodeGroup>
+
+```typescript Update Task
+import { updateTask } from '@/services/task';
+import { useTaskStore } from '@/store/TaskState';
+
+const { updateTask: updateCurrentTask } = useTaskStore();
+const taskId = "task-123";
+
+const updates = {
+  title: "Updated title",
+  description: "Updated description"
+};
+
+try {
+  const updatedTask = await updateTask(taskId, updates);
+  updateCurrentTask(updatedTask, taskId);
+  console.log("Task updated successfully");
+} catch (error) {
+  console.log("Error updating task: ", error);
+}
+```
+
+```typescript From TaskScreen Component
+// src/screens/TaskScreen.tsx:53-62
+async function updateTaskHandler(data: Partial<Task>) {
+  try {
+    const updatedTask = await updateTask(taskId, data);
+    updateCurrentTask({
+      ...updatedTask, 
+      status: selectedTask?.status, 
+      createdAt: selectedTask?.createdAt
+    }, taskId);
+    navigation.goBack();  
+  } catch (error) {
+    alert("Ups!", "Error editing task, please check the data and try again.");
+    console.log("Error editing tasks: ", error);
+  }
+}
+```
+
+</CodeGroup>
+
+### HTTP Request
+
+```http
+PUT /tasks/{id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "title": "Updated title",
+  "description": "Updated description"
+}
+```
+
+<Warning>
+  This endpoint only updates `title` and `description`. To change the task status, use the `changeStatus()` function instead.
+</Warning>
+
+---
+
+## changeStatus()
+
+Toggles a task's status between "pending" and "completed".
+
+### Function Signature
+
+```typescript
+export async function changeStatus(id: string)
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The ID of the task to toggle status
+</ParamField>
+
+### Returns
+
+<ResponseField name="data" type="object">
+  Object containing the updated status
+</ResponseField>
+
+<ResponseField name="data.status" type="string">
+  The new status value ("pending" or "completed")
+</ResponseField>
+
+### Example Usage
+
+<CodeGroup>
+
+```typescript Toggle Task Status
+import { changeStatus } from '@/services/task';
+import { useTaskStore } from '@/store/TaskState';
+
+const { toggleTaskStatus } = useTaskStore();
+const taskId = "task-123";
+
+try {
+  const { status } = await changeStatus(taskId);
+  toggleTaskStatus(taskId, status);
+  console.log("Task status changed to:", status);
+} catch (error) {
+  console.log("Error changing status: ", error);
+}
+```
+
+```typescript From TaskListElement Component
+// src/components/task/TaskListElement.tsx:64-72
+async function toggleStatus() {
+  try {
+    const { status } = await changeStatus(id!);
+    toggleTaskStatus(id!, status);
+  } catch (error) {
+    alert(
+      "Attention please!", 
+      `The task ${title} status could not changed, please try again later`
+    );
+    console.log("Error to toggle task status: ", error);
+  }
+}
+```
+
+</CodeGroup>
+
+### HTTP Request
+
+```http
+PATCH /tasks/{id}/status
+Authorization: Bearer {token}
+```
+
+<Info>
+  This is a toggle operation - it automatically switches between "pending" and "completed" states without requiring a request body.
+</Info>
+
+---
+
+## deleteTask()
+
+Permanently deletes a task.
+
+### Function Signature
+
+```typescript
+export async function deleteTask(id: string)
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The ID of the task to delete
+</ParamField>
+
+### Returns
+
+Void. No data is returned on successful deletion.
+
+### Example Usage
+
+<CodeGroup>
+
+```typescript Delete Task
+import { deleteTask } from '@/services/task';
+import { useTaskStore } from '@/store/TaskState';
+
+const { deleteTask: deleteCurrentTask } = useTaskStore();
+const taskId = "task-123";
+
+try {
+  await deleteTask(taskId);
+  deleteCurrentTask(taskId);
+  console.log("Task deleted successfully");
+} catch (error) {
+  console.log("Error deleting task: ", error);
+}
+```
+
+```typescript From TaskListElement Component
+// src/components/task/TaskListElement.tsx:53-62
+async function deleteAction() {
+  try {
+    await deleteTask(id!);
+    deleteCurrentTask(id!);
+    alert("Well done", `The task ${title} has been deleted successfully!`);   
+  } catch (error) {
+    alert(
+      "Attention please!", 
+      `The task ${title} could not be deleted, please try again later`
+    );
+    console.log("Error deleting task: ", error);
+  }
+}
+```
+
+</CodeGroup>
+
+### HTTP Request
+
+```http
+DELETE /tasks/{id}
+Authorization: Bearer {token}
+```
+
+<Warning>
+  This operation is permanent and cannot be undone. Always confirm with the user before deleting tasks.
+</Warning>
+
+## Common Patterns
+
+### Error Handling
+
+All task operations should be wrapped in try-catch blocks:
+
+```typescript
+try {
+  const result = await taskOperation();
+  // Handle success
+} catch (error) {
+  alert("Error title", "User-friendly error message");
+  console.log("Error details: ", error);
+}
+```
+
+### State Management
+
+Tasks are managed using Zustand store (`useTaskStore`):
+
+```typescript
+import { useTaskStore } from '@/store/TaskState';
+
+const { 
+  tasks,           // Current task list
+  setTasks,        // Replace all tasks
+  addTask,         // Add new task to store
+  updateTask,      // Update existing task
+  deleteTask,      // Remove task from store
+  toggleTaskStatus // Toggle task status
+} = useTaskStore();
+```
+
+### Complete CRUD Example
+
+```typescript
+import { getTasks, addTask, updateTask, changeStatus, deleteTask } from '@/services/task';
+import { useTaskStore } from '@/store/TaskState';
+
+const { tasks, setTasks, addTask: addNewTask, updateTask: updateCurrentTask, deleteTask: removeTask, toggleTaskStatus } = useTaskStore();
+
+// Fetch all tasks
+const allTasks = await getTasks();
+setTasks(allTasks);
+
+// Create new task
+const newTask = await addTask({ title: "New Task", description: "Details" });
+addNewTask(newTask);
+
+// Update task
+const updated = await updateTask(taskId, { title: "Updated" });
+updateCurrentTask(updated, taskId);
+
+// Toggle status
+const { status } = await changeStatus(taskId);
+toggleTaskStatus(taskId, status);
+
+// Delete task
+await deleteTask(taskId);
+removeTask(taskId);
+```

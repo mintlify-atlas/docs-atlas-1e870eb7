@@ -1,0 +1,223 @@
+---
+title: State Management
+description: Zustand stores for authentication and task management
+---
+
+## Overview
+
+The Go Game Todo App uses **Zustand** for state management. Zustand provides a simple, hook-based API without the boilerplate of traditional Redux.
+
+The app has two main stores:
+- **AuthStore** - Manages authentication state and token persistence
+- **TaskStore** - Manages task CRUD operations and local state
+
+## AuthStore
+
+Handles user authentication, token storage, and session management.
+
+<CodeGroup>
+```typescript src/store/AuthStore.ts
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { create } from "zustand";
+
+type AuthStore = {
+    token: string;
+    isAuth: boolean;
+    authenticate: (token: string) => void;
+    logOut: () => void;
+}
+
+export const useAuthStore = create<AuthStore>((set) => ({
+    token: "",
+    isAuth: false,
+    authenticate: (token) => {
+        AsyncStorage?.setItem("token", token);
+        set(() => ({
+            token,
+            isAuth: true,
+        }))
+    },
+    logOut: () => {
+        AsyncStorage?.removeItem("token");
+        set(() => ({
+            token: '',
+            isAuth: false,
+        }))
+    }
+}))
+```
+</CodeGroup>
+
+### State Properties
+
+<ParamField path="token" type="string">
+  JWT token for API authentication
+</ParamField>
+
+<ParamField path="isAuth" type="boolean">
+  Authentication status flag used for conditional navigation
+</ParamField>
+
+### Actions
+
+<ParamField path="authenticate" type="(token: string) => void">
+  Stores token in AsyncStorage and updates auth state (`AuthStore.ts:14-20`)
+</ParamField>
+
+<ParamField path="logOut" type="() => void">
+  Removes token from AsyncStorage and resets auth state (`AuthStore.ts:21-27`)
+</ParamField>
+
+<Note>
+  The `authenticate` function is called both during login and on app launch when a stored token is found (`App.tsx:40`)
+</Note>
+
+## TaskStore
+
+Manages the local task collection with full CRUD operations.
+
+<CodeGroup>
+```typescript src/store/TaskState.ts
+import { Task } from "@/interfaces/task";
+import { create } from "zustand";
+
+type TaskStore = {
+    tasks: Task[];
+    setTasks: (data: Task[]) => void;
+    addTask: (data: Task) => void;
+    updateTask: (data: Task, id: string) => void;
+    toggleTaskStatus: (id: string, status: string) => void;
+    deleteTask: (id: string) => void;
+}
+
+export const useTaskStore= create<TaskStore>((set) => ({
+    tasks: [],
+    setTasks: (data) => {
+        set((state) => ({
+            tasks: data,
+        }))
+    },
+    addTask: (data) => {
+        set((state) => ({
+            tasks: [data, ...state?.tasks],
+        }))
+    },
+    updateTask: (data, id) => {
+        set((state) => ({
+            tasks: [...state?.tasks?.map(item => {
+                if (item?.id === id) {
+                    return data;
+                }
+                return item;
+            })],
+        }))
+    },
+    toggleTaskStatus: (id, status) => {
+        set((state) => ({
+            tasks: [...state?.tasks?.map(item => {
+                if (item?.id === id) {
+                    return {
+                        ...item,
+                        status: status,
+                    }
+                }
+                return item;
+            })]
+        }))
+    },
+    deleteTask: (id) => {
+        set((state) => ({
+            tasks: state?.tasks?.filter(item => item.id !== id),
+        }));
+    }
+}));
+```
+</CodeGroup>
+
+### Task Interface
+
+The Task type is defined in `src/interfaces/task.ts`:
+
+```typescript src/interfaces/task.ts
+export interface Task {
+    id: string;
+    title: string;
+    description: string;
+    createdAt: Date;
+    status: string;
+    userId: string;
+}
+```
+
+### State Properties
+
+<ParamField path="tasks" type="Task[]">
+  Array of all tasks for the current user
+</ParamField>
+
+### Actions
+
+<ParamField path="setTasks" type="(data: Task[]) => void">
+  Replaces entire task array, typically used after fetching from API (`TaskState.ts:15-19`)
+</ParamField>
+
+<ParamField path="addTask" type="(data: Task) => void">
+  Prepends new task to the beginning of the array (`TaskState.ts:20-24`)
+</ParamField>
+
+<ParamField path="updateTask" type="(data: Task, id: string) => void">
+  Updates task by ID using immutable map operation (`TaskState.ts:25-34`)
+</ParamField>
+
+<ParamField path="toggleTaskStatus" type="(id: string, status: string) => void">
+  Updates only the status field of a specific task (`TaskState.ts:35-47`)
+</ParamField>
+
+<ParamField path="deleteTask" type="(id: string) => void">
+  Removes task from array using filter (`TaskState.ts:48-52`)
+</ParamField>
+
+## Usage Pattern
+
+Stores are consumed using React hooks:
+
+<Tabs>
+  <Tab title="Auth Usage">
+    ```typescript
+    import { useAuthStore } from '@/store/AuthStore';
+
+    function LoginForm() {
+      const { authenticate } = useAuthStore();
+      
+      const handleLogin = async (token: string) => {
+        authenticate(token);
+      };
+    }
+    ```
+  </Tab>
+  <Tab title="Task Usage">
+    ```typescript
+    import { useTaskStore } from '@/store/TaskState';
+
+    function HomeScreen() {
+      const { tasks, setTasks, deleteTask } = useTaskStore();
+      
+      useEffect(() => {
+        loadTasks();
+      }, []);
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Info>
+  Zustand automatically handles re-renders when store state changes. Components only re-render when the specific state slices they use are updated.
+</Info>
+
+## Why Zustand?
+
+- **No boilerplate** - No actions, reducers, or providers needed
+- **Hook-based API** - Natural integration with React components
+- **TypeScript support** - Full type inference with minimal configuration
+- **Small bundle size** - ~1KB compared to Redux's ~20KB
+- **Simple async handling** - No middleware required for async operations

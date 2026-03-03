@@ -1,0 +1,181 @@
+---
+title: 'HomeScreen'
+description: 'Main screen displaying the user task list with loading and empty states'
+---
+
+## Overview
+
+The `HomeScreen` is the primary interface of The Go Game Todo App where users view their task list. It handles data fetching, loading states, and displays tasks in an organized list format.
+
+## Screen Implementation
+
+```tsx HomeScreen.tsx
+import TaskList from '@/components/task/TaskList';
+import DefaultText from '@/components/ui/DefaultText';
+import LoadingOverlay from '@/components/ui/LoadingOverlay';
+import { getTasks } from '@/services/task';
+import { useTaskStore } from '@/store/TaskState';
+import alert from '@/utils/alert';
+import { GlobalColors } from '@/utils/colors';
+import { useEffect, useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
+
+function HomeScreen() {
+
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const {tasks, setTasks} = useTaskStore();
+    
+    useEffect(() => {
+      async function fetchData() {
+        try {
+          const data = await getTasks();
+          setTasks(data);
+        } catch (error) {
+          alert("Attention please!", "The tasks could not be loaded");
+          console.log("Error fetching tasks: ", error);
+        }
+        setIsLoading(false);
+      }
+      fetchData();
+    }, []);
+
+    if (isLoading) {
+      return <LoadingOverlay />;
+    }
+
+    return (
+        <View style={styles.container}>
+            {!tasks?.length ? (
+              <View>
+                <DefaultText>No tasks available</DefaultText>
+              </View>
+            ) : (
+              <TaskList tasks={tasks} />
+            )}
+        </View>
+    )
+}
+
+export default HomeScreen;
+
+const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: GlobalColors?.darkBackground,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
+```
+
+## Screen Flow
+
+<Steps>
+  <Step title="Initial Load">
+    Screen mounts with `isLoading` set to `true`, displaying the `LoadingOverlay` component
+  </Step>
+  
+  <Step title="Fetch Tasks">
+    `useEffect` hook triggers `getTasks()` API call to retrieve user tasks from the backend
+  </Step>
+  
+  <Step title="Update State">
+    Retrieved tasks are stored in global state via `setTasks()` from the `useTaskStore` hook
+  </Step>
+  
+  <Step title="Render Content">
+    Loading state is disabled and screen displays either:
+    - Task list if tasks exist
+    - Empty state message if no tasks available
+  </Step>
+</Steps>
+
+## State Management
+
+### Local State
+
+```tsx
+const [isLoading, setIsLoading] = useState<boolean>(true);
+```
+
+Tracks the loading status during initial data fetch.
+
+### Global State
+
+```tsx
+const {tasks, setTasks} = useTaskStore();
+```
+
+Accesses the Zustand store for task management:
+- **tasks** - Array of task objects
+- **setTasks** - Function to update the task list
+
+## Error Handling
+
+<Info>
+  If the `getTasks()` API call fails, the screen:
+  1. Displays an alert: "Attention please! The tasks could not be loaded"
+  2. Logs the error to the console
+  3. Sets loading to false and shows the empty state
+</Info>
+
+## UI States
+
+### Loading State
+
+```tsx
+if (isLoading) {
+  return <LoadingOverlay />;
+}
+```
+
+Displays a full-screen loading indicator while fetching tasks.
+
+### Empty State
+
+```tsx
+{!tasks?.length ? (
+  <View>
+    <DefaultText>No tasks available</DefaultText>
+  </View>
+) : (
+  <TaskList tasks={tasks} />
+)}
+```
+
+Shows a centered message when no tasks exist.
+
+### Task List State
+
+Renders the `TaskList` component with the fetched tasks when data is available.
+
+## Styling
+
+### Container Styles
+
+- **flex: 1** - Full screen height
+- **backgroundColor** - Dark background from global theme
+- **justifyContent: 'center'** - Vertically centers empty state message
+- **alignItems: 'center'** - Horizontally centers content
+
+## Dependencies
+
+| Dependency | Purpose |
+|------------|----------|
+| `TaskList` | Component that renders the list of tasks |
+| `LoadingOverlay` | Full-screen loading indicator |
+| `DefaultText` | Styled text component for empty state |
+| `getTasks` | API service to fetch tasks from backend |
+| `useTaskStore` | Zustand store hook for task state management |
+| `alert` | Custom alert utility for error messages |
+
+## Navigation
+
+<Note>
+  The HomeScreen typically includes a header with navigation to add new tasks (floating action button or header button). Task items in the list are tappable and navigate to the `TaskScreen` with edit mode.
+</Note>
+
+## Related Components
+
+- [TaskList](/components/task-components) - Displays tasks in a scrollable list
+- [TaskScreen](/screens/task-screen) - Create/edit individual tasks

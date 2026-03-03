@@ -1,0 +1,145 @@
+---
+title: Components Overview
+description: Component structure and organization in The Go Game Todo App
+---
+
+## Component Architecture
+
+The Go Game Todo App follows a modular component architecture, organizing components into three main categories:
+
+<CardGroup cols={3}>
+  <Card title="UI Components" icon="palette" href="/components/ui-components">
+    Reusable UI building blocks for text, buttons, inputs, and images
+  </Card>
+  <Card title="Task Components" icon="list-check" href="/components/task-components">
+    Task-specific components for forms, lists, and task management
+  </Card>
+  <Card title="Auth Components" icon="lock" href="/components/auth-components">
+    Authentication-related components for user login
+  </Card>
+</CardGroup>
+
+## Directory Structure
+
+```
+src/components/
+├── ui/                      # Reusable UI components
+│   ├── DefaultText.tsx      # Basic text component
+│   ├── Title.tsx            # Large title text
+│   ├── Subtitle.tsx         # Medium subtitle text
+│   ├── FlatButton.tsx       # Pressable button component
+│   ├── Input.tsx            # Text input with label
+│   ├── LoadingOverlay.tsx   # Loading spinner overlay
+│   └── TaskImage.tsx        # Task goal image
+├── task/                    # Task-related components
+│   ├── TaskForm.tsx         # Form for creating/editing tasks
+│   ├── TaskList.tsx         # List container for tasks
+│   ├── TaskListElement.tsx  # Individual task item
+│   └── TaskRightHeader.tsx  # Header actions (add, logout)
+└── auth/                    # Authentication components
+    └── LoginForm.tsx        # Email-based login form
+```
+
+## Design Principles
+
+### Composition over Configuration
+
+Components are designed to be composable and accept style overrides:
+
+```tsx
+<Title style={{ color: 'blue', fontSize: 32 }}>
+  Custom Styled Title
+</Title>
+```
+
+### TypeScript Interfaces
+
+All components use TypeScript interfaces defined in `/src/interfaces/`:
+
+- `ButtonProps` - Button component props
+- `InputProps` - Input component props
+- `TextProps` - Text component props
+- `Task` - Task data structure
+
+### Consistent Styling
+
+Components leverage shared utilities:
+
+- `appFonts` - Centralized font definitions
+- `GlobalColors` - Application color palette
+- `GlobalStyles` - Reusable style patterns (cards, containers)
+
+## Component Categories
+
+<Accordion title="UI Components">
+  These are the foundational building blocks used throughout the app:
+  
+  - **Text Components**: DefaultText, Title, Subtitle
+  - **Input Components**: Input, FlatButton
+  - **Utility Components**: LoadingOverlay, TaskImage
+  
+  All UI components accept React Native style props for customization.
+</Accordion>
+
+<Accordion title="Task Components">
+  Task-specific components handle the core todo functionality:
+  
+  - **TaskForm**: Create and edit task forms
+  - **TaskList**: Renders a scrollable list of tasks
+  - **TaskListElement**: Individual task card with actions
+  - **TaskRightHeader**: Navigation header with add/logout buttons
+  
+  These components integrate with Zustand state management and navigation.
+</Accordion>
+
+<Accordion title="Auth Components">
+  Authentication components manage user access:
+  
+  - **LoginForm**: Email-based authentication with auto-registration
+  
+  Integrates with the auth store and backend API services.
+</Accordion>
+
+## Usage Patterns
+
+### Importing Components
+
+```tsx
+import Title from '@/components/ui/Title';
+import TaskForm from '@/components/task/TaskForm';
+import LoginForm from '@/components/auth/LoginForm';
+```
+
+### State Management Integration
+
+Many components integrate with Zustand stores:
+
+```tsx
+import { useTaskStore } from '@/store/TaskState';
+import { useAuthStore } from '@/store/AuthStore';
+```
+
+### Navigation Integration
+
+Components use React Navigation for screen transitions:
+
+```tsx
+import { useNavigation } from '@react-navigation/native';
+import { NavigationProp } from '@/types/navigation';
+
+const navigation = useNavigation<NavigationProp>();
+```
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="UI Components" icon="palette" href="/components/ui-components">
+    Explore all UI building blocks
+  </Card>
+  <Card title="Task Components" icon="list-check" href="/components/task-components">
+    Learn about task management components
+  </Card>
+  <Card title="Auth Components" icon="lock" href="/components/auth-components">
+    Review authentication components
+  </Card>
+</CardGroup>

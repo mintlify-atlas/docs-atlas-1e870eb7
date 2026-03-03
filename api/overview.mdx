@@ -1,0 +1,136 @@
+---
+title: 'API Overview'
+description: 'Learn how The Go Game Todo App integrates with the backend API'
+---
+
+## Introduction
+
+The Go Game Todo App uses a RESTful API to manage user authentication and task operations. All API requests are handled through an axios-based HTTP client with automatic token management.
+
+## Base Configuration
+
+The API client is configured in `src/client/axios.ts` using the base URL from environment variables:
+
+```typescript
+const axiosInstance = Axios.create({
+  baseURL: API_URL, // Set via .env file
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+```
+
+### Environment Setup
+
+Set your API URL in the `.env` file:
+
+```bash
+API_URL=https://your-api-domain.com/api
+```
+
+## Authentication
+
+All API requests automatically include authentication tokens when available. The axios interceptor retrieves the token from AsyncStorage and adds it to request headers:
+
+```typescript
+axiosInstance.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  }
+);
+```
+
+<Info>
+  Tokens are stored in AsyncStorage after successful login and automatically attached to all subsequent requests.
+</Info>
+
+## HTTP Client
+
+The `HttpRequest` class provides methods for all HTTP operations:
+
+<CodeGroup>
+
+```typescript GET Request
+import { HttpRequest } from "@/client/Http";
+
+const http = new HttpRequest();
+const response = await http.get("/endpoint");
+```
+
+```typescript POST Request
+import { HttpRequest } from "@/client/Http";
+
+const http = new HttpRequest();
+const response = await http.post("/endpoint", { data: "value" });
+```
+
+```typescript PUT Request
+import { HttpRequest } from "@/client/Http";
+
+const http = new HttpRequest();
+const response = await http.put("/endpoint/id", { data: "updated" });
+```
+
+```typescript PATCH Request
+import { HttpRequest } from "@/client/Http";
+
+const http = new HttpRequest();
+const response = await http.patch("/endpoint/id");
+```
+
+```typescript DELETE Request
+import { HttpRequest } from "@/client/Http";
+
+const http = new HttpRequest();
+await http.delete("/endpoint/id");
+```
+
+</CodeGroup>
+
+## API Modules
+
+The API is organized into two main modules:
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/api/authentication">
+    User registration, login, and token validation
+  </Card>
+  <Card title="Tasks" icon="list-check" href="/api/tasks">
+    CRUD operations for task management
+  </Card>
+</CardGroup>
+
+## Error Handling
+
+API errors are caught and handled in the UI layer. Common patterns:
+
+```typescript
+try {
+  const data = await getTasks();
+  setTasks(data);
+} catch (error) {
+  alert("Attention please!", "The tasks could not be loaded");
+  console.log("Error fetching tasks: ", error);
+}
+```
+
+<Warning>
+  Always wrap API calls in try-catch blocks to handle network errors and API failures gracefully.
+</Warning>
+
+## Response Format
+
+All successful API responses return data in the following format:
+
+```typescript
+{
+  data: any // The actual response data
+}
+```
+
+The service functions extract and return `response?.data` directly to consumers.

@@ -1,0 +1,299 @@
+---
+title: 'TaskScreen'
+description: 'Screen for creating new tasks or editing existing ones with dynamic form handling'
+---
+
+## Overview
+
+The `TaskScreen` is a versatile screen that serves dual purposes: creating new tasks and editing existing ones. It dynamically adapts its UI and behavior based on navigation parameters.
+
+## Screen Implementation
+
+```tsx TaskScreen.tsx
+import TaskForm from "@/components/task/TaskForm"
+import { Task } from "@/interfaces/task";
+import { addTask, updateTask } from "@/services/task";
+import { Alert, Platform, StyleSheet, Text, View } from "react-native"
+import { useNavigation } from '@react-navigation/native';
+import { NavigationProp } from "@/types/navigation";
+import { useTaskStore } from "@/store/TaskState";
+import { useLayoutEffect } from "react";
+import { GlobalColors } from "@/utils/colors";
+import TaskImage from "@/components/ui/TaskImage";
+import alert from "@/utils/alert";
+
+function TaskScreen({ route }: any) {
+    const navigation = useNavigation<NavigationProp>();
+
+    const { 
+        addTask: addNewTask,
+        updateTask: updateCurrentTask,
+        tasks,
+    } = useTaskStore();
+
+    const taskId = route?.params?.taskId;
+    const isEdit = !!taskId;
+
+    const selectedTask = tasks?.find(task => task?.id === taskId);
+
+    useLayoutEffect(() => {
+        navigation?.setOptions({
+            title: isEdit ? `Edit "${selectedTask?.title}"` : 'Add New Task',
+        })
+    }, []);
+
+    async function submitHandler(data: Partial<Task>) {
+        if (!isEdit) {
+            await addTaskHandler(data);
+            return;
+        }
+        await updateTaskHandler(data);
+    } 
+
+    async function addTaskHandler(data: Partial<Task>) {
+        try {
+            const newTask = await addTask(data);
+            addNewTask(newTask);
+            navigation.goBack();   
+        } catch (error) {
+            alert("Ups!", "Error adding task, please check the data and try again.");
+            console.log("Error adding tasks: ", error);
+        }
+    }
+
+    async function updateTaskHandler(data: Partial<Task>) {
+        try {
+            const updatedTask = await updateTask(taskId, data);
+            updateCurrentTask({...updatedTask, status: selectedTask?.status, createdAt: selectedTask?.createdAt}, taskId);
+            navigation.goBack();  
+        } catch (error) {
+            alert("Ups!", "Error editing task, please check the data and try again.");
+            console.log("Error editing tasks: ", error);
+        }
+    }
+
+    return (
+        <View style={styles.rootContainer}>
+            <TaskImage />
+            <TaskForm onSubmit={submitHandler} isEdit={isEdit} selectedTask={selectedTask} />
+        </View>
+    )
+}
+
+export default TaskScreen;
+
+const styles = StyleSheet.create({
+    rootContainer: {
+        flex: 1,
+        backgroundColor: GlobalColors?.darkBackground,
+        justifyContent: 'center',
+        alignItems: Platform?.OS === 'web' ? 'center' : 'stretch',
+    }
+});
+```
+
+## Navigation Parameters
+
+### Route Params
+
+```tsx
+const taskId = route?.params?.taskId;
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `taskId` | `string \| undefined` | ID of the task to edit. If undefined, screen operates in "create" mode |
+
+<Info>
+  The presence of `taskId` determines the screen mode:
+  - **No taskId** - Create new task
+  - **Has taskId** - Edit existing task
+</Info>
+
+## Screen Modes
+
+### Create Mode
+
+```tsx
+const isEdit = !!taskId;  // false when taskId is undefined
+```
+
+- Header title: "Add New Task"
+- Form starts with empty fields
+- Submit calls `addTaskHandler()`
+
+### Edit Mode
+
+```tsx
+const selectedTask = tasks?.find(task => task?.id === taskId);
+```
+
+- Header title: `Edit "[Task Title]"`
+- Form pre-populated with existing task data
+- Submit calls `updateTaskHandler()`
+
+## Screen Flow
+
+<Steps>
+  <Step title="Initialize Screen">
+    Extract `taskId` from route params and determine if operating in create or edit mode
+  </Step>
+  
+  <Step title="Load Task Data (Edit Mode)">
+    If `taskId` exists, find the corresponding task from the global task store
+  </Step>
+  
+  <Step title="Set Navigation Title">
+    Use `useLayoutEffect` to dynamically set header title based on mode and task title
+  </Step>
+  
+  <Step title="Render Form">
+    Display `TaskForm` component with mode-specific configuration and task data
+  </Step>
+  
+  <Step title="Handle Submission">
+    Process form data through either `addTaskHandler` or `updateTaskHandler`
+  </Step>
+  
+  <Step title="Update State & Navigate">
+    On success, update global task store and navigate back to HomeScreen
+  </Step>
+</Steps>
+
+## State Management
+
+### Global Task Store
+
+```tsx
+const { 
+    addTask: addNewTask,
+    updateTask: updateCurrentTask,
+    tasks,
+} = useTaskStore();
+```
+
+Accesses Zustand store methods:
+- **addNewTask** - Adds new task to global state
+- **updateCurrentTask** - Updates existing task in global state
+- **tasks** - Array of all tasks (used to find selected task)
+
+## Form Submission Logic
+
+### Submit Handler
+
+```tsx
+async function submitHandler(data: Partial<Task>) {
+    if (!isEdit) {
+        await addTaskHandler(data);
+        return;
+    }
+    await updateTaskHandler(data);
+}
+```
+
+Routes form submission to the appropriate handler based on screen mode.
+
+### Add Task Handler
+
+```tsx
+async function addTaskHandler(data: Partial<Task>) {
+    try {
+        const newTask = await addTask(data);
+        addNewTask(newTask);
+        navigation.goBack();   
+    } catch (error) {
+        alert("Ups!", "Error adding task, please check the data and try again.");
+        console.log("Error adding tasks: ", error);
+    }
+}
+```
+
+<Steps>
+  <Step title="API Call">
+    Sends task data to backend via `addTask()` service
+  </Step>
+  <Step title="Update Store">
+    Adds returned task object to global state
+  </Step>
+  <Step title="Navigate Back">
+    Returns to HomeScreen on success
+  </Step>
+  <Step title="Error Handling">
+    Shows alert if operation fails
+  </Step>
+</Steps>
+
+### Update Task Handler
+
+```tsx
+async function updateTaskHandler(data: Partial<Task>) {
+    try {
+        const updatedTask = await updateTask(taskId, data);
+        updateCurrentTask({
+            ...updatedTask, 
+            status: selectedTask?.status, 
+            createdAt: selectedTask?.createdAt
+        }, taskId);
+        navigation.goBack();  
+    } catch (error) {
+        alert("Ups!", "Error editing task, please check the data and try again.");
+        console.log("Error editing tasks: ", error);
+    }
+}
+```
+
+<Note>
+  The update handler preserves `status` and `createdAt` fields from the original task, as these are not editable in the form but should remain unchanged.
+</Note>
+
+## Dynamic Header Title
+
+```tsx
+useLayoutEffect(() => {
+    navigation?.setOptions({
+        title: isEdit ? `Edit "${selectedTask?.title}"` : 'Add New Task',
+    })
+}, []);
+```
+
+Sets the navigation header title before the screen renders:
+- **Create mode**: "Add New Task"
+- **Edit mode**: "Edit \"[Task Title]\""
+
+## Layout & Styling
+
+### Root Container
+
+- **flex: 1** - Full screen height
+- **backgroundColor** - Dark background from global theme
+- **justifyContent: 'center'** - Vertically centers content
+- **Platform-specific alignment**:
+  - Web: `alignItems: 'center'` (centered horizontally)
+  - Mobile: `alignItems: 'stretch'` (full width)
+
+## Error Handling
+
+<Info>
+  Both add and update operations include try-catch blocks that:
+  1. Display user-friendly alert messages
+  2. Log detailed errors to console for debugging
+  3. Prevent navigation if operation fails
+</Info>
+
+## Dependencies
+
+| Dependency | Purpose |
+|------------|----------|
+| `TaskForm` | Reusable form component for task input |
+| `TaskImage` | App branding displayed at top |
+| `addTask` | API service to create new task |
+| `updateTask` | API service to update existing task |
+| `useTaskStore` | Zustand store for task state management |
+| `useNavigation` | React Navigation hook for navigation control |
+| `alert` | Custom alert utility for user notifications |
+
+## Related Screens & Components
+
+- [HomeScreen](/screens/home-screen) - Displays task list and navigates to TaskScreen
+- [TaskForm](/components/task-components) - Form component with input validation
+- [Task API](/api/tasks) - API endpoints for task operations

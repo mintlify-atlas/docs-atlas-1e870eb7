@@ -1,0 +1,213 @@
+---
+title: "Troubleshooting"
+description: "Common issues and solutions when developing The Go Game Todo App"
+---
+
+## Common Issues
+
+### API Connection Problems
+
+<Accordion title="Network request failed / Cannot connect to API">
+  **Problem**: The app cannot connect to your local API server.
+  
+  **Solution**:
+  
+  1. **Check your .env file**: Ensure you're using your LAN IP address, not `localhost`
+  
+  ```bash
+  # Wrong ❌
+  API_URL=http://localhost:3000/api
+  
+  # Correct ✅
+  API_URL=http://192.168.1.100:3000/api
+  ```
+  
+  2. **Find your IP address**:
+  ```bash
+  ipconfig
+  ```
+  Look for your IPv4 address under your active network adapter.
+  
+  3. **Verify the API is running**: Test the API endpoint in your browser or with curl:
+  ```bash
+  curl http://YOUR_IP_ADDRESS:PORT/api
+  ```
+  
+  4. **Check firewall settings**: Ensure your firewall allows connections on the API port.
+</Accordion>
+
+<Accordion title="API works in browser but not in app">
+  **Problem**: The API is accessible from your browser but the mobile app still can't connect.
+  
+  **Solution**:
+  
+  1. **Ensure both devices are on the same network**: Your development machine and mobile device must be on the same WiFi network
+  
+  2. **Restart the Expo development server**:
+  ```bash
+  # Press Ctrl+C to stop, then restart
+  npm start
+  ```
+  
+  3. **Clear the app cache**: In the Expo Developer Menu, select "Reload" or "Clear cache and restart"
+  
+  4. **Check for typos**: Verify the IP address in your `.env` file matches your machine's actual IP
+</Accordion>
+
+### Localhost vs IP Address
+
+<Warning>
+  **Why can't I use localhost?**
+  
+  When running the app on a physical device or emulator, `localhost` refers to the device itself, not your development machine. You must use your computer's LAN IP address so the device can reach your API server over the network.
+</Warning>
+
+**When to use what**:
+
+| Scenario | API_URL Example |
+|----------|----------------|
+| Web browser (npm run web) | `http://localhost:3000/api` |
+| Physical device | `http://192.168.1.100:3000/api` |
+| Android emulator | `http://10.0.2.2:3000/api` (special alias) |
+| iOS simulator | `http://localhost:3000/api` (shares host network) |
+
+### Installation Issues
+
+<Accordion title="npm install fails with dependency errors">
+  **Problem**: Package installation fails with version conflicts or missing dependencies.
+  
+  **Solution**:
+  
+  1. **Clear npm cache**:
+  ```bash
+  npm cache clean --force
+  ```
+  
+  2. **Delete node_modules and lock file**:
+  ```bash
+  rm -rf node_modules package-lock.json
+  npm install
+  ```
+  
+  3. **Use legacy peer deps** (if needed):
+  ```bash
+  npm install --legacy-peer-deps
+  ```
+</Accordion>
+
+<Accordion title="Expo CLI not found">
+  **Problem**: Running `npm start` shows "expo: command not found".
+  
+  **Solution**:
+  
+  Expo CLI is included as a project dependency. Ensure you've run:
+  ```bash
+  npm install
+  ```
+  
+  If the issue persists, you can install Expo CLI globally:
+  ```bash
+  npm install -g expo-cli
+  ```
+</Accordion>
+
+### Runtime Issues
+
+<Accordion title="White screen or app crashes on launch">
+  **Problem**: The app shows a white screen or crashes immediately after launching.
+  
+  **Solution**:
+  
+  1. **Check for JavaScript errors** in the terminal or Expo Developer Tools
+  
+  2. **Verify .env file exists**:
+  ```bash
+  ls -la .env
+  ```
+  
+  3. **Restart with cache cleared**:
+  ```bash
+  npm start -- --clear
+  ```
+  
+  4. **Check for missing environment variables**: Ensure `API_URL` is set in `.env`
+</Accordion>
+
+<Accordion title="Changes not reflecting in the app">
+  **Problem**: Code changes don't appear when the app reloads.
+  
+  **Solution**:
+  
+  1. **Reload manually**: Shake device or press `Cmd+R` / `Ctrl+R`
+  
+  2. **Restart the development server**:
+  ```bash
+  # Press Ctrl+C to stop
+  npm start
+  ```
+  
+  3. **Clear Metro bundler cache**:
+  ```bash
+  npm start -- --clear
+  ```
+  
+  4. **Reinstall the app** on your device through Expo Go
+</Accordion>
+
+### Platform-Specific Issues
+
+<Accordion title="iOS simulator not launching">
+  **Problem**: Running `npm run ios` doesn't open the iOS simulator.
+  
+  **Solution**:
+  
+  1. **Ensure Xcode is installed** (macOS only)
+  
+  2. **Open Xcode once** and accept the license agreement
+  
+  3. **Install Xcode Command Line Tools**:
+  ```bash
+  xcode-select --install
+  ```
+  
+  4. **Specify simulator**:
+  ```bash
+  expo start --ios --simulator="iPhone 15"
+  ```
+</Accordion>
+
+<Accordion title="Android emulator not starting">
+  **Problem**: Running `npm run android` fails to launch the Android emulator.
+  
+  **Solution**:
+  
+  1. **Ensure Android Studio is installed**
+  
+  2. **Create an AVD (Android Virtual Device)** in Android Studio
+  
+  3. **Start the emulator manually** first:
+     - Open Android Studio
+     - Go to AVD Manager
+     - Click the play button on your virtual device
+  
+  4. **Then run**:
+  ```bash
+  npm run android
+  ```
+</Accordion>
+
+## Getting More Help
+
+If you're still experiencing issues:
+
+1. **Check the Expo documentation**: [docs.expo.dev](https://docs.expo.dev)
+2. **Review error messages carefully**: They often contain specific solutions
+3. **Search the issue on Stack Overflow** or Expo forums
+4. **Check that all dependencies are up to date**:
+   ```bash
+   npm outdated
+   ```
+
+<Warning>
+  Always ensure your `.env` file is properly configured before reporting API connection issues. This is the most common source of problems.
+</Warning>

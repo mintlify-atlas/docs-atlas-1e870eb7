@@ -1,0 +1,280 @@
+---
+title: API Client
+description: HttpRequest class and axios configuration for API communication
+---
+
+## Overview
+
+The app uses a custom `HttpRequest` class wrapper around Axios for type-safe API communication with automatic token injection.
+
+## Architecture
+
+```
+src/client/
+├── axios.ts       # Axios instance with interceptors
+└── Http.ts        # HttpRequest wrapper class
+```
+
+## Axios Instance
+
+Configured axios instance with request/response interceptors.
+
+<CodeGroup>
+```typescript src/client/axios.ts
+import Axios, { AxiosError } from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_URL } from '@env';
+
+const LOG_AXIOS = false;
+
+const axiosInstance = Axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
+axiosInstance.interceptors.request.use(
+  async (config) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error("Error al obtener el token", error);
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+if (LOG_AXIOS) {
+  axiosInstance.interceptors.request.use((request) => {
+    console.log("Starting Request", request);
+    return request;
+  });
+
+  axiosInstance.interceptors.response.use((response) => {
+    console.log("Response:", response);
+    return response;
+  });
+}
+
+export default axiosInstance;
+```
+</CodeGroup>
+
+### Configuration
+
+<ParamField path="baseURL" type="string">
+  API base URL loaded from environment variable (`axios.ts:8`)
+</ParamField>
+
+<ParamField path="headers" type="object">
+  Default headers for JSON API communication (`axios.ts:9-12`)
+</ParamField>
+
+### Request Interceptor
+
+Automatically injects JWT token from AsyncStorage into all requests:
+
+```typescript axios.ts:15-30
+axiosInstance.interceptors.request.use(
+  async (config) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error("Error al obtener el token", error);
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+```
+
+<Info>
+  The interceptor reads the token from AsyncStorage on every request, ensuring the latest token is always used even if it changes during the session
+</Info>
+
+### Debug Logging
+
+Optional request/response logging controlled by `LOG_AXIOS` flag (`axios.ts:5, 32-42`).
+
+## HttpRequest Class
+
+Wrapper class providing typed HTTP methods.
+
+<CodeGroup>
+```typescript src/client/Http.ts
+import axiosInstance from "./axios";
+import { AxiosRequestConfig } from "axios";
+
+export class HttpRequest {
+    async get(url: string, config?: AxiosRequestConfig) {
+        return axiosInstance.get(url, config);
+    }
+
+    async post(url: string, body: any, config?: AxiosRequestConfig) {
+        return axiosInstance.post(url, body, config);
+    }
+
+    async put(url: string, body: any, config?: AxiosRequestConfig) {
+        return axiosInstance.put(url, body, config);
+    }
+
+    async patch(url: string, body?: any, config?: AxiosRequestConfig) {
+        return axiosInstance.patch(url, body, config);
+    }
+
+    async delete(url: string, config?: AxiosRequestConfig) {
+        return axiosInstance.delete(url, config);
+    }
+}
+```
+</CodeGroup>
+
+### Methods
+
+<ParamField path="get" type="(url: string, config?: AxiosRequestConfig) => Promise">
+  HTTP GET request (`Http.ts:5-7`)
+</ParamField>
+
+<ParamField path="post" type="(url: string, body: any, config?: AxiosRequestConfig) => Promise">
+  HTTP POST request with request body (`Http.ts:9-11`)
+</ParamField>
+
+<ParamField path="put" type="(url: string, body: any, config?: AxiosRequestConfig) => Promise">
+  HTTP PUT request for full updates (`Http.ts:13-15`)
+</ParamField>
+
+<ParamField path="patch" type="(url: string, body?: any, config?: AxiosRequestConfig) => Promise">
+  HTTP PATCH request for partial updates (`Http.ts:17-19`)
+</ParamField>
+
+<ParamField path="delete" type="(url: string, config?: AxiosRequestConfig) => Promise">
+  HTTP DELETE request (`Http.ts:21-23`)
+</ParamField>
+
+## Service Layer Usage
+
+The HttpRequest class is instantiated in service files:
+
+<Tabs>
+  <Tab title="Task Service">
+    ```typescript src/services/task.ts
+    import { HttpRequest } from "@/client/Http";
+    import { Task } from "@/interfaces/task";
+
+    const http = new HttpRequest();
+
+    export async function getTasks() {
+        const response = await http.get(`/tasks`);
+        return response?.data;
+    }
+
+    export async function addTask(body: Partial<Task>) {
+        const response = await http.post(`/tasks`, {...body});
+        return response?.data;
+    }
+
+    export async function updateTask(id: string, body: Partial<Task>) {
+        const response = await http.put(`/tasks/${id}`, {...body});
+        return response?.data;
+    }
+
+    export async function changeStatus(id: string) {
+        const response = await http.patch(`/tasks/${id}/status`);
+        return response?.data;
+    }
+
+    export async function deleteTask(id: string) {
+        await http.delete(`/tasks/${id}`);
+    }
+    ```
+  </Tab>
+  <Tab title="User Service">
+    ```typescript src/services/user.ts
+    import { HttpRequest } from "@/client/Http";
+
+    const http = new HttpRequest();
+
+    export async function checkUser(email: string) {
+        const response = await http.get(`/users/${email}`);
+        return response?.data;
+    }
+
+    export async function addNewUser(email: string) {
+        const response = await http.post(`/users`, {email});
+        return response?.data;
+    }
+
+    export async function validateToken(token: string) {
+        const response = await http.post(`/users/validate-token`, {token});
+        return response?.data;
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## API Endpoints
+
+### Task Endpoints
+
+| Method | Endpoint | Description | Line Reference |
+|--------|----------|-------------|----------------|
+| GET | `/tasks` | Fetch all user tasks | `task.ts:7` |
+| POST | `/tasks` | Create new task | `task.ts:12` |
+| PUT | `/tasks/:id` | Update task | `task.ts:16` |
+| PATCH | `/tasks/:id/status` | Toggle task status | `task.ts:21` |
+| DELETE | `/tasks/:id` | Delete task | `task.ts:26` |
+
+### User Endpoints
+
+| Method | Endpoint | Description | Line Reference |
+|--------|----------|-------------|----------------|
+| GET | `/users/:email` | Check if user exists | `user.ts:6` |
+| POST | `/users` | Create new user | `user.ts:11` |
+| POST | `/users/validate-token` | Validate JWT token | `user.ts:16` |
+
+## Environment Configuration
+
+The API URL is loaded from environment variables:
+
+```typescript
+import { API_URL } from '@env';
+```
+
+<Note>
+  Environment variables are configured in `.env` file using `react-native-dotenv`. See `.env.example` for required variables.
+</Note>
+
+## Error Handling
+
+Services return raw response data without error handling. Error handling should be implemented at the component level:
+
+```typescript
+try {
+  const tasks = await getTasks();
+  setTasks(tasks);
+} catch (error) {
+  // Handle error in component
+  console.error('Failed to load tasks:', error);
+}
+```
+
+## Key Features
+
+- **Automatic token injection** - No manual header configuration needed
+- **Centralized axios instance** - Single source of configuration
+- **Type-safe methods** - AxiosRequestConfig for additional options
+- **Service layer pattern** - Clean separation between API calls and components
+- **Environment-based URLs** - Easy switching between dev/staging/prod

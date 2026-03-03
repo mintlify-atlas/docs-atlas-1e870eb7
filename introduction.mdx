@@ -1,0 +1,99 @@
+---
+title: Introduction
+description: Welcome to The Go Game Todo App - A React Native mobile todo application built with Expo
+---
+
+# The Go Game Todo App
+
+A modern, cross-platform todo application built with React Native and Expo. This mobile app provides a seamless task management experience with user authentication, real-time task updates, and a beautiful user interface.
+
+## Key Features
+
+- **Email-based Authentication** - Simple email login with automatic user registration
+- **Task Management** - Create, update, toggle status, and delete tasks
+- **State Management** - Powered by Zustand for efficient state handling
+- **Persistent Storage** - AsyncStorage integration for token persistence
+- **Custom Fonts** - Beautiful typography with Parkinsans and Lilita One fonts
+- **Cross-Platform** - Runs on iOS, Android, and Web
+
+## Technology Stack
+
+The app is built with modern React Native technologies:
+
+```tsx src/App.tsx
+import { fontsList } from '@/utils/fonts';
+import { useFonts } from 'expo-font';
+import { StatusBar } from 'expo-status-bar';
+import { NavigationContainer } from '@react-navigation/native';
+import AuthStack from '@/stacks/AuthStack';
+import { useAuthStore } from '@/store/AuthStore';
+import TaskStack from '@/stacks/TaskStack';
+
+export default function App() {
+  const { isAuth, authenticate } = useAuthStore();
+  const [fontsLoaded] = useFonts(fontsList);
+
+  return (
+    <>
+      <StatusBar style="auto" />
+      <NavigationContainer>
+        {!isAuth ? (
+          <AuthStack />
+        ) : (
+          <TaskStack />
+        )}
+      </NavigationContainer>
+    </>
+  );
+}
+```
+
+## Core Dependencies
+
+- **React Native** 0.76.3 - Mobile framework
+- **Expo** ~52.0.11 - Development platform
+- **React Navigation** ^7.0.13 - Navigation library
+- **Zustand** ^5.0.2 - State management
+- **Axios** ^1.7.9 - HTTP client
+- **AsyncStorage** ^2.1.0 - Local storage
+
+## Quick Start
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Get started by installing dependencies and setting up your development environment
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration">
+    Configure your API URL and environment variables
+  </Card>
+  <Card title="Architecture" icon="diagram-project" href="/architecture/overview">
+    Learn about the app's structure, components, and state management
+  </Card>
+  <Card title="API Integration" icon="plug" href="/api/overview">
+    Understand how the app communicates with the backend API
+  </Card>
+</CardGroup>
+
+## Project Structure
+
+The application follows a clean, organized structure:
+
+```
+src/
+├── client/          # HTTP client and Axios configuration
+├── components/      # Reusable UI components
+│   ├── auth/       # Authentication components
+│   ├── task/       # Task-related components
+│   └── ui/         # Generic UI components
+├── interfaces/      # TypeScript interfaces
+├── screens/        # Screen components
+├── services/       # API service functions
+├── stacks/         # Navigation stacks
+├── store/          # Zustand state stores
+├── types/          # Type definitions
+└── utils/          # Utility functions
+```
+
+<Note>
+  This app requires a backend API to function properly. Make sure you have the API running and configured before starting development.
+</Note>

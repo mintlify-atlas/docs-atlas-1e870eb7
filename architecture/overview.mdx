@@ -1,0 +1,150 @@
+---
+title: Architecture Overview
+description: App structure, folder organization, and tech stack for The Go Game Todo App
+---
+
+## Tech Stack
+
+The Go Game Todo App is built with the following technologies:
+
+- **React Native** (0.76.3) - Mobile app framework
+- **Expo** (~52.0.11) - Development platform
+- **TypeScript** (5.3.3) - Type-safe JavaScript
+- **Zustand** (5.0.2) - State management
+- **React Navigation** (7.0.13) - Navigation solution
+- **Axios** (1.7.9) - HTTP client
+- **AsyncStorage** (2.1.0) - Local storage
+
+## Project Structure
+
+The application follows a feature-based folder structure:
+
+```
+src/
+├── client/          # HTTP client and axios configuration
+│   ├── Http.ts      # HttpRequest class wrapper
+│   └── axios.ts     # Axios instance with interceptors
+├── components/      # Reusable UI components
+│   ├── auth/        # Authentication components
+│   ├── task/        # Task-related components
+│   └── ui/          # Generic UI components
+├── interfaces/      # TypeScript interfaces
+│   ├── task.ts      # Task interface
+│   ├── button.ts    # Button props
+│   ├── input.ts     # Input props
+│   └── text.ts      # Text props
+├── screens/         # Screen components
+│   ├── LoginScreen.tsx
+│   ├── HomeScreen.tsx
+│   └── TaskScreen.tsx
+├── services/        # API service functions
+│   ├── task.ts      # Task CRUD operations
+│   └── user.ts      # User authentication
+├── stacks/          # Navigation stacks
+│   ├── AuthStack.tsx
+│   └── TaskStack.tsx
+├── store/           # Zustand stores
+│   ├── AuthStore.ts
+│   └── TaskState.ts
+├── types/           # TypeScript type definitions
+│   ├── env.d.ts
+│   └── navigation.ts
+└── utils/           # Utility functions
+    ├── alert.ts
+    ├── colors.ts
+    ├── date.ts
+    ├── fonts.ts
+    └── styles.ts
+```
+
+## Application Entry Point
+
+The main application logic is in `App.tsx`:
+
+<CodeGroup>
+```typescript App.tsx
+import { fontsList } from '@/utils/fonts';
+import { useFonts } from 'expo-font';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
+import { NavigationContainer } from '@react-navigation/native';
+import AuthStack from '@/stacks/AuthStack';
+import { useAuthStore } from '@/store/AuthStore';
+import TaskStack from '@/stacks/TaskStack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export default function App() {
+  const { isAuth, authenticate } = useAuthStore();
+
+  const [fontsLoaded] = useFonts(fontsList);
+  const [appIsReady, setAppIsReady] = useState(false);
+
+  useEffect(() => {
+    fetchToken();
+  }, [])
+
+  useEffect(() => {
+    async function prepare() {
+      if (fontsLoaded) {
+        await SplashScreen.hideAsync();
+        setAppIsReady(true);
+      }
+    }
+    prepare();
+  }, [fontsLoaded]);
+ 
+  if (!appIsReady) {
+    return null;
+  }
+
+  async function fetchToken() {
+    const storedToken = await AsyncStorage?.getItem("token");
+    if (storedToken?.length) {
+        authenticate(storedToken);
+    }
+  }
+
+  return (
+    <>
+      <StatusBar style="auto" />
+      <NavigationContainer>
+        {!isAuth ? (
+          <AuthStack />
+        ) : (
+          <TaskStack />
+        )}
+      </NavigationContainer>
+    </>
+  );
+}
+```
+</CodeGroup>
+
+<Info>
+  **App.tsx:37-42** - Token persistence using AsyncStorage for automatic authentication on app launch
+</Info>
+
+## Key Architecture Patterns
+
+### Conditional Navigation
+
+The app uses conditional rendering to switch between authentication and main app stacks based on authentication state (`App.tsx:48-52`).
+
+### Path Aliases
+
+The project uses `@/` path alias for cleaner imports:
+- `@/store/AuthStore` instead of `../../store/AuthStore`
+- `@/components/ui/Button` instead of `../../../components/ui/Button`
+
+### Type Safety
+
+All components, services, and stores are fully typed with TypeScript interfaces defined in `src/interfaces/` and `src/types/`.
+
+### Separation of Concerns
+
+- **Stores** manage global state
+- **Services** handle API communication
+- **Components** focus on UI rendering
+- **Screens** compose components and connect to stores
+- **Stacks** define navigation structure

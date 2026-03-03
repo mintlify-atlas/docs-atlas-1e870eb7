@@ -1,0 +1,112 @@
+---
+title: "Running Locally"
+description: "Learn how to run The Go Game Todo App on your local development environment"
+---
+
+## Prerequisites
+
+Before running the app, ensure you have the following installed:
+
+- Node.js and npm
+- Expo CLI
+- Expo Go app on your mobile device (for testing on physical devices)
+
+## Environment Setup
+
+<Steps>
+  <Step title="Copy the environment file">
+    Create a `.env` file from the example template:
+    
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+
+  <Step title="Configure the API URL">
+    Open the `.env` file and set the API URL:
+    
+    ```bash
+    API_URL=http://<YOUR_IP_ADDRESS>:<API_PORT>/api
+    ```
+    
+    <Warning>
+      **Important**: Do not use `localhost` when testing on physical devices or emulators. You must use your machine's LAN IP address instead, or the app will fail to connect to the API.
+    </Warning>
+  </Step>
+
+  <Step title="Find your IP address">
+    To find your LAN IP address, run:
+    
+    ```bash
+    ipconfig
+    ```
+    
+    Look for your IPv4 address (e.g., `192.168.1.100`).
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all required npm packages:
+    
+    ```bash
+    npm install
+    ```
+  </Step>
+</Steps>
+
+## Running the App
+
+<Steps>
+  <Step title="Start the development server">
+    Launch the Expo development server:
+    
+    ```bash
+    npm start
+    ```
+    
+    This will open the Expo Developer Tools in your browser.
+  </Step>
+
+  <Step title="Choose your platform">
+    You can run the app on different platforms:
+    
+    **Android**
+    ```bash
+    npm run android
+    ```
+    
+    **iOS** (macOS only)
+    ```bash
+    npm run ios
+    ```
+    
+    **Web**
+    ```bash
+    npm run web
+    ```
+  </Step>
+
+  <Step title="Scan the QR code (for physical devices)">
+    If using a physical device:
+    
+    1. Open the Expo Go app on your mobile device
+    2. Scan the QR code displayed in the terminal or browser
+    3. The app will load on your device
+  </Step>
+</Steps>
+
+## Development Workflow
+
+Once the app is running:
+
+- Changes to your code will automatically reload the app
+- Shake your device or press `Cmd+D` (iOS) / `Cmd+M` (Android) to open the developer menu
+- Use the developer menu to enable features like live reload, debugging, and performance monitoring
+
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start the Expo development server |
+| `npm run android` | Run the app on Android device/emulator |
+| `npm run ios` | Run the app on iOS simulator (macOS only) |
+| `npm run web` | Run the app in a web browser |

@@ -1,0 +1,227 @@
+---
+title: Installation
+description: Step-by-step guide to install and run The Go Game Todo App
+---
+
+# Installation
+
+Get The Go Game Todo App up and running on your local development environment.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** (v16 or higher)
+- **npm** or **yarn** package manager
+- **Expo CLI** (installed automatically with the project)
+- A mobile device or emulator for testing
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the project to your local machine:
+    
+    ```bash
+    git clone <repository-url>
+    cd the-game-go-todo-app
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all required packages using your preferred package manager:
+    
+    <CodeGroup>
+      ```bash npm
+      npm install
+      ```
+
+      ```bash yarn
+      yarn install
+      ```
+    </CodeGroup>
+
+    This will install all dependencies from `package.json`, including:
+
+    ```json package.json
+    {
+      "dependencies": {
+        "@expo/metro-runtime": "~4.0.0",
+        "@react-native-async-storage/async-storage": "^2.1.0",
+        "@react-navigation/native": "^7.0.13",
+        "@react-navigation/native-stack": "^7.1.14",
+        "axios": "^1.7.9",
+        "expo": "~52.0.11",
+        "expo-font": "~13.0.1",
+        "expo-splash-screen": "~0.29.13",
+        "react": "18.3.1",
+        "react-native": "0.76.3",
+        "react-native-dotenv": "^3.4.11",
+        "zustand": "^5.0.2"
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Create a `.env` file from the example template:
+    
+    ```bash
+    cp .env.example .env
+    ```
+
+    See the [Configuration](/configuration) page for detailed setup instructions.
+  </Step>
+
+  <Step title="Start the development server">
+    Launch the Expo development server:
+    
+    <CodeGroup>
+      ```bash npm
+      npm start
+      ```
+
+      ```bash yarn
+      yarn start
+      ```
+    </CodeGroup>
+
+    This runs the command defined in package.json:
+
+    ```json package.json
+    {
+      "scripts": {
+        "start": "expo start",
+        "android": "expo start --android",
+        "ios": "expo start --ios",
+        "web": "expo start --web"
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Run on your device">
+    Choose your preferred platform:
+
+    <CodeGroup>
+      ```bash Android
+      npm run android
+      ```
+
+      ```bash iOS
+      npm run ios
+      ```
+
+      ```bash Web
+      npm run web
+      ```
+    </CodeGroup>
+
+    Alternatively, scan the QR code with the Expo Go app on your mobile device.
+  </Step>
+</Steps>
+
+## Babel Configuration
+
+The app uses a custom Babel configuration to support environment variables:
+
+```javascript babel.config.js
+module.exports = {
+  presets: ['babel-preset-expo'],
+  plugins: [
+    ['module:react-native-dotenv', {
+      moduleName: '@env',
+      path: '.env',
+      safe: false,
+      allowUndefined: true,
+    }],
+  ],
+};
+```
+
+This configuration enables importing environment variables from `.env` using the `@env` module:
+
+```typescript src/client/axios.ts
+import { API_URL } from '@env';
+
+const axiosInstance = Axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+```
+
+<Warning>
+  If you modify the Babel configuration, you may need to clear the Metro bundler cache:
+  
+  ```bash
+  npx expo start --clear
+  ```
+</Warning>
+
+## Expo Configuration
+
+The app is configured in `app.json` with the following settings:
+
+```json app.json
+{
+  "expo": {
+    "name": "the-game-go-todo-app",
+    "slug": "the-game-go-todo-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
+```
+
+<Note>
+  The app uses Expo's new architecture (`newArchEnabled: true`) for improved performance.
+</Note>
+
+## Troubleshooting
+
+### Port Already in Use
+
+If you see an error about port 8081 being in use:
+
+```bash
+npx expo start --port 8082
+```
+
+### Metro Bundler Issues
+
+Clear the cache and restart:
+
+```bash
+npx expo start --clear
+```
+
+### Module Not Found Errors
+
+Reinstall dependencies:
+
+<CodeGroup>
+  ```bash npm
+  rm -rf node_modules
+  npm install
+  ```
+
+  ```bash yarn
+  rm -rf node_modules
+  yarn install
+  ```
+</CodeGroup>
+
+## Next Steps
+
+Now that you have the app installed, proceed to:
+
+- [Configuration](/configuration) - Set up your environment variables
+- [Architecture](/architecture/overview) - Learn about the app structure
+- [Development](/development/running-locally) - Start building features

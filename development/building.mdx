@@ -1,0 +1,173 @@
+---
+title: "Building for Production"
+description: "Build The Go Game Todo App for iOS, Android, and Web platforms"
+---
+
+## Overview
+
+The Go Game Todo App is built using Expo, which provides multiple options for creating production builds for different platforms.
+
+## Build Methods
+
+There are two primary ways to build the app:
+
+1. **EAS Build** (Recommended) - Cloud-based build service
+2. **Local Build** - Build on your local machine
+
+## EAS Build (Cloud)
+
+<Steps>
+  <Step title="Install EAS CLI">
+    Install the Expo Application Services CLI globally:
+    
+    ```bash
+    npm install -g eas-cli
+    ```
+  </Step>
+
+  <Step title="Login to your Expo account">
+    Authenticate with your Expo account:
+    
+    ```bash
+    eas login
+    ```
+  </Step>
+
+  <Step title="Configure the build">
+    Initialize EAS Build configuration:
+    
+    ```bash
+    eas build:configure
+    ```
+    
+    This creates an `eas.json` file in your project root.
+  </Step>
+
+  <Step title="Build for your target platform">
+    **Android APK/AAB**
+    ```bash
+    eas build --platform android
+    ```
+    
+    **iOS**
+    ```bash
+    eas build --platform ios
+    ```
+    
+    **Both platforms**
+    ```bash
+    eas build --platform all
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Building for iOS requires an Apple Developer account ($99/year). Android builds can be created without a paid account.
+</Warning>
+
+## Platform-Specific Configuration
+
+### Android
+
+<Accordion title="Android Build Configuration">
+  To build for Android:
+  
+  1. **APK vs AAB**: Choose between APK (direct installation) or AAB (Google Play Store)
+  2. **Keystore**: EAS can manage your keystore automatically
+  3. **Build profile**: Configure in `eas.json`
+  
+  Example `eas.json` for Android:
+  ```json
+  {
+    "build": {
+      "production": {
+        "android": {
+          "buildType": "apk"
+        }
+      }
+    }
+  }
+  ```
+</Accordion>
+
+### iOS
+
+<Accordion title="iOS Build Configuration">
+  To build for iOS:
+  
+  1. **Apple Developer account** required
+  2. **Provisioning profile** and **certificates** (EAS can manage automatically)
+  3. **Bundle identifier** must be unique
+  
+  Example `eas.json` for iOS:
+  ```json
+  {
+    "build": {
+      "production": {
+        "ios": {
+          "buildConfiguration": "Release"
+        }
+      }
+    }
+  }
+  ```
+</Accordion>
+
+### Web
+
+<Accordion title="Web Build Configuration">
+  To build for web deployment:
+  
+  ```bash
+  npx expo export --platform web
+  ```
+  
+  This creates an optimized production build in the `dist` folder that can be deployed to any static hosting service.
+</Accordion>
+
+## Environment Variables for Production
+
+Before building, ensure your production API URL is configured:
+
+```bash
+# .env.production
+API_URL=https://your-production-api.com/api
+```
+
+<Warning>
+  Make sure to use HTTPS for production API endpoints to ensure secure communication.
+</Warning>
+
+## Distribution
+
+### Android Distribution
+
+- **Google Play Store**: Upload the AAB file
+- **Direct distribution**: Share the APK file
+- **Internal testing**: Use EAS Submit for automated uploads
+
+### iOS Distribution
+
+- **App Store**: Use EAS Submit or manually upload via App Store Connect
+- **TestFlight**: For beta testing
+- **Ad-hoc distribution**: For internal testing on specific devices
+
+### Web Distribution
+
+Deploy the built web assets to:
+- Netlify
+- Vercel
+- GitHub Pages
+- Any static hosting service
+
+## Automated Submission
+
+Submit your app to stores automatically:
+
+```bash
+# Submit to Google Play Store
+eas submit --platform android
+
+# Submit to Apple App Store
+eas submit --platform ios
+```

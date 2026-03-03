@@ -1,0 +1,264 @@
+---
+title: Configuration
+description: Configure environment variables and API settings for The Go Game Todo App
+---
+
+# Configuration
+
+Proper configuration is essential for The Go Game Todo App to communicate with the backend API.
+
+## Environment Variables
+
+The app uses environment variables to manage configuration settings. These are loaded using the `react-native-dotenv` package.
+
+### Creating the .env File
+
+<Steps>
+  <Step title="Copy the example file">
+    Create your `.env` file from the template:
+    
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+
+  <Step title="Configure the API URL">
+    Open `.env` and set your API endpoint:
+    
+    ```bash .env
+    API_URL=http://<YOUR_IP_ADDRESS>:<API_PORT>/api
+    ```
+
+    Example for local development:
+    
+    ```bash .env
+    API_URL=http://192.168.1.100:3000/api
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  **Important for local development:** Do not use `localhost` or `127.0.0.1` when running on a physical device. You must use your computer's LAN IP address instead.
+</Warning>
+
+## Finding Your Local IP Address
+
+To connect a physical device to your local API server, you need your computer's LAN IP address.
+
+### Windows
+
+```bash
+ipconfig
+```
+
+Look for the IPv4 Address under your active network adapter.
+
+### macOS/Linux
+
+```bash
+ifconfig
+```
+
+or
+
+```bash
+ip addr show
+```
+
+Look for your local network interface (usually `en0` on macOS or `eth0`/`wlan0` on Linux).
+
+## Environment Type Declaration
+
+The app includes TypeScript type definitions for environment variables:
+
+```typescript src/types/env.d.ts
+declare module '@env' {
+  export const API_URL: string;
+}
+```
+
+This ensures type safety when importing environment variables throughout the application.
+
+## Axios Configuration
+
+The API client is configured to use the environment variable:
+
+```typescript src/client/axios.ts
+import Axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_URL } from '@env';
+
+const axiosInstance = Axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
+axiosInstance.interceptors.request.use(
+  async (config) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error("Error al obtener el token", error);
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+export default axiosInstance;
+```
+
+### Key Configuration Features
+
+- **Base URL**: Set from the `API_URL` environment variable
+- **Default Headers**: JSON content type and accept headers
+- **Request Interceptor**: Automatically adds Bearer token from AsyncStorage
+- **Token Management**: Retrieves stored authentication token for each request
+
+## HTTP Client Wrapper
+
+The app uses an HTTP client class that wraps Axios:
+
+```typescript src/client/Http.ts
+import axiosInstance from "./axios";
+import { AxiosRequestConfig } from "axios";
+
+export class HttpRequest {
+  async get(url: string, config?: AxiosRequestConfig) {
+    return axiosInstance.get(url, config);
+  }
+
+  async post(url: string, body: any, config?: AxiosRequestConfig) {
+    return axiosInstance.post(url, body, config);
+  }
+
+  async put(url: string, body: any, config?: AxiosRequestConfig) {
+    return axiosInstance.put(url, body, config);
+  }
+
+  async patch(url: string, body?: any, config?: AxiosRequestConfig) {
+    return axiosInstance.patch(url, body, config);
+  }
+
+  async delete(url: string, config?: AxiosRequestConfig) {
+    return axiosInstance.delete(url, config);
+  }
+}
+```
+
+This wrapper is used throughout the app's service layer:
+
+```typescript src/services/task.ts
+import { HttpRequest } from "@/client/Http";
+import { Task } from "@/interfaces/task";
+
+const http = new HttpRequest();
+
+export async function getTasks() {
+  const response = await http.get(`/tasks`);
+  return response?.data;
+}
+
+export async function addTask(body: Partial<Task>) {
+  const response = await http.post(`/tasks`, {...body});
+  return response?.data;
+}
+
+export async function updateTask(id: string, body: Partial<Task>) {
+  const response = await http.put(`/tasks/${id}`, {...body});
+  return response?.data;
+}
+```
+
+## Configuration Examples
+
+### Development Environment
+
+```bash .env
+# Local API server
+API_URL=http://192.168.1.100:3000/api
+```
+
+### Production Environment
+
+```bash .env
+# Production API server
+API_URL=https://api.production.com/api
+```
+
+### Staging Environment
+
+```bash .env
+# Staging API server
+API_URL=https://api.staging.com/api
+```
+
+## Debugging API Requests
+
+To enable request/response logging, modify the Axios configuration:
+
+```typescript src/client/axios.ts
+const LOG_AXIOS = true; // Set to true to enable logging
+
+if (LOG_AXIOS) {
+  axiosInstance.interceptors.request.use((request) => {
+    console.log("Starting Request", request);
+    return request;
+  });
+
+  axiosInstance.interceptors.response.use((response) => {
+    console.log("Response:", response);
+    return response;
+  });
+}
+```
+
+<Note>
+  Remember to set `LOG_AXIOS` back to `false` in production to avoid cluttering logs.
+</Note>
+
+## Common Configuration Issues
+
+### API Connection Failures
+
+**Problem**: App cannot connect to the API
+
+**Solutions**:
+- Verify the API URL is correct in `.env`
+- Ensure the API server is running
+- Check that you're using your LAN IP (not localhost) for physical devices
+- Verify firewall settings allow connections on the API port
+
+### Environment Variables Not Loading
+
+**Problem**: `API_URL` is undefined
+
+**Solutions**:
+- Restart the Metro bundler after changing `.env`
+- Clear cache: `npx expo start --clear`
+- Verify `babel.config.js` includes the `react-native-dotenv` plugin
+
+### Token Not Persisting
+
+**Problem**: User must login after every app restart
+
+**Solutions**:
+- Check AsyncStorage permissions
+- Verify the authentication flow in `App.tsx:37-42`
+- Ensure the token is being stored in `AuthStore.ts:14-19`
+
+## Next Steps
+
+With configuration complete, you can:
+
+- [Architecture](/architecture/overview) - Learn about the app structure
+- [Authentication](/api/authentication) - Understand the auth flow
+- [State Management](/architecture/state-management) - Explore Zustand stores
