@@ -1,0 +1,85 @@
+{
+  "projectType": "frontend",
+  "projectName": "The Go Game Todo App",
+  "projectDescription": "A React Native mobile todo application with authentication and task management",
+  "theme": "almond",
+  "primaryColor": "#3B82F6",
+  "lightColor": "#60A5FA",
+  "darkColor": "#2563EB",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "configuration"
+        ]
+      },
+      {
+        "group": "Architecture",
+        "pages": [
+          "architecture/overview",
+          "architecture/state-management",
+          "architecture/navigation",
+          "architecture/api-client"
+        ]
+      },
+      {
+        "group": "Components",
+        "pages": [
+          "components/overview",
+          "components/ui-components",
+          "components/task-components",
+          "components/auth-components"
+        ]
+      },
+      {
+        "group": "Screens",
+        "pages": [
+          "screens/login-screen",
+          "screens/home-screen",
+          "screens/task-screen"
+        ]
+      },
+      {
+        "group": "API Integration",
+        "pages": [
+          "api/overview",
+          "api/authentication",
+          "api/tasks"
+        ]
+      },
+      {
+        "group": "Development",
+        "pages": [
+          "development/running-locally",
+          "development/building",
+          "development/troubleshooting"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "User authentication with token-based auth",
+    "Task CRUD operations (create, read, update, delete)",
+    "Task status toggling",
+    "Persistent local storage with AsyncStorage",
+    "State management with Zustand",
+    "React Navigation for screen routing",
+    "Expo for cross-platform mobile development"
+  ],
+  "publicApiSurface": [
+    "useAuthStore - Authentication state management",
+    "useTaskStore - Task state management",
+    "HttpRequest - HTTP client wrapper",
+    "getTasks() - Fetch all tasks",
+    "addTask() - Create new task",
+    "updateTask() - Update existing task",
+    "changeStatus() - Toggle task status",
+    "deleteTask() - Delete task",
+    "checkUser() - Verify user exists",
+    "addNewUser() - Register new user",
+    "validateToken() - Validate authentication token"
+  ]
+}
